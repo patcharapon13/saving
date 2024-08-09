@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 import com.self.saving.repository.CryptoCurrenciesRepository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -45,9 +47,31 @@ public class CryptoCurrenciesService {
         }
     }
 
-//    public void saveProducts() {
-//        saveCoins(CryptoCurrenciesInfoEntity.builder().productId("XRP-USDT").ema(EmaEntity.builder().productId("XRP-USDT").build()).price(BigDecimal.TEN).build());
-//    }
+    public List<CryptoCurrenciesModel> listProductsBeingOverEma(Integer day) {
+        return cryptoCurrenciesRepository.findAll().stream().filter(value -> filterEma(value, day)).map(cryptoCurrenciesMapper::toCryptoCurrenciesModel).toList();
+    }
+
+
+    private boolean filterEma(CryptoCurrenciesInfoEntity entity, Integer day) {
+        switch (day) {
+            case 50 -> {
+                if(Objects.isNull(entity.getEma().getEma50())) return false;
+                return entity.getPrice().compareTo(entity.getEma().getEma50()) >= 0;
+            }
+            case 100 -> {
+                if(Objects.isNull(entity.getEma().getEma200())) return false;
+                return entity.getPrice().compareTo(entity.getEma().getEma200()) >= 0;
+            }
+            case 200 -> {
+                if(Objects.isNull(entity.getEma().getEma200())) return false;
+                return entity.getPrice().compareTo(entity.getEma().getEma100()) >= 0;
+            }
+            default -> {
+                return false;
+            }
+        }
+
+    }
 
 
     public CryptoCurrenciesInfoEntity saveCoin(CryptoCurrenciesModel entities) {
@@ -58,6 +82,10 @@ public class CryptoCurrenciesService {
         return cryptoCurrenciesRepository.saveAllAndFlush(cryptoCurrenciesMapper.toCryptoCurrenciesInfoEntities(models));
     }
 
+    public List<CryptoCurrenciesInfoEntity> saveAllCoins(Set<CryptoCurrenciesInfoEntity> models) {
+        return cryptoCurrenciesRepository.saveAllAndFlush(models);
+    }
+
     @Transactional(readOnly = true)
     public List<CryptoCurrenciesModel> getCoins() {
         return cryptoCurrenciesMapper.toCryptoCurrenciesModels(cryptoCurrenciesRepository.findAll());
@@ -66,6 +94,10 @@ public class CryptoCurrenciesService {
 
     public List<CryptoCurrenciesInfoEntity> toCryptoCurrenciesInfoEntities(List<CryptoCurrenciesModel> cryptoProductModel) {
         return cryptoCurrenciesMapper.toCryptoCurrenciesInfoEntities(cryptoProductModel);
+    }
+
+    public Set<CryptoCurrenciesInfoEntity> toCryptoCurrenciesInfoEntities(Set<CryptoProductModel> cryptoProductModels) {
+        return cryptoCurrenciesMapper.toCryptoCurrenciesInfoEntities(cryptoProductModels);
     }
 
 

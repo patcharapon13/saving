@@ -3,13 +3,16 @@ package com.self.saving.controller;
 import com.self.saving.cron.PatchPriceJob;
 import com.self.saving.model.CryptoProductModel;
 import com.self.saving.model.PriceHistories;
+import jakarta.websocket.server.PathParam;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.self.saving.service.CryptoCurrenciesService;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @RestController
@@ -31,6 +34,11 @@ public class CryptoCurrenciesController {
         return ResponseEntity.ok(cryptoCurrenciesService.getProducts());
 
 
+    }
+
+    @GetMapping("/ema/{day}")
+    public ResponseEntity<?> getPriceOverEma(@PathVariable Integer day) {
+        return ResponseEntity.ok(cryptoCurrenciesService.listProductsBeingOverEma(Objects.requireNonNullElse(day,50)));
     }
 
     @GetMapping("/save")

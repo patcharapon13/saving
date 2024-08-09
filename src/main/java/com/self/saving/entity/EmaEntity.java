@@ -33,7 +33,7 @@ public class EmaEntity {
     private BigDecimal ema200;
 
     @CreationTimestamp
-    @Column(name = "created_date")
+    @Column(name = "created_date",updatable = false)
     private LocalDateTime createdDate;
 
     @UpdateTimestamp

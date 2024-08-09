@@ -34,23 +34,18 @@ public class PatchPriceJob {
     private final Validator validator;
 
 
-//    @Scheduled(cron = "0 0 0 ? * * *")
-//    public void patchCoinsLately() {
-//        cryptoCurrenciesService.saveAllCoins(cryptoCurrenciesService.toCryptoCurrenciesInfoEntities(cryptoCurrenciesService.getProducts()));
-//    }
+    @Scheduled(cron = "0 0 0 ? * * *")
+    public void patchCoinsLately() {
+        cryptoCurrenciesService.saveAllCoins(cryptoCurrenciesService.toCryptoCurrenciesInfoEntities(cryptoCurrenciesService.getProducts()));
+    }
 
-    //    @Scheduled(cron = "0 0 0 ? * * *")
+        @Scheduled(cron = "0 5 * * * * *")
     public List<CryptoCurrenciesModel> patchEma() {
-
         var coins = cryptoCurrenciesService.getCoins();
         var executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
         List<CompletableFuture<Void>> futures = coins.stream()
-                .flatMap(coin -> Stream.of(
-                        CompletableFuture.runAsync(() -> findEMA(coin, 50), executor),
-                        CompletableFuture.runAsync(() -> findEMA(coin, 100), executor),
-                        CompletableFuture.runAsync(() -> findEMA(coin, 200), executor)
-                ))
+                .map(coin -> CompletableFuture.runAsync(() -> findEMA(coin), executor))
                 .toList();
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
@@ -58,10 +53,64 @@ public class PatchPriceJob {
                 .thenAccept(ac -> cryptoCurrenciesService.saveAllCoins(coins))
                 .join();
 
-
         return coins.stream().filter(value-> !validator.validate(value.getEma(), EmaValidator.class).isEmpty() ).toList();
     }
 
+
+
+
+    private void findEMA(CryptoCurrenciesModel cryptoCurrenciesModel) {
+
+        var start = String.valueOf(Utility.localDateTimeToTimestamp(LocalDateTime.now().minusDays(200+1)));
+        var end = String.valueOf(Utility.localDateTimeToTimestamp(LocalDateTime.now()));
+        var cryptoId = cryptoCurrenciesModel.getId();
+
+
+        var priceHistories = cryptoCurrenciesService.listCoins(cryptoId, PeriodEnum.hour.getGranularity(), start, end);
+        cryptoCurrenciesModel.setPriceHistories(priceHistories);
+
+        var multiplier = 2.0 / (200 + 1);
+        var ema50 = priceHistories.subList(1,50).stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).average().orElse(0.0);
+        var ema100 = priceHistories.subList(1,100).stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).average().orElse(0.0);
+        var ema200 = priceHistories.subList(1,200).stream().mapToDouble(value -> value.getClosingPrice().doubleValue()).average().orElse(0.0);
+
+
+        var closingPrice = priceHistories.get(0).getClosingPrice().doubleValue();
+        ema50 = (closingPrice * multiplier) + (ema50 * (1 - multiplier));
+        ema100 = (closingPrice * multiplier) + (ema100 * (1 - multiplier));
+        ema200 = (closingPrice * multiplier) + (ema200 * (1 - multiplier));
+
+        var emaModel = cryptoCurrenciesModel.getEma();
+        emaModel.setProductId(cryptoId);
+        emaModel.setEma50(BigDecimal.valueOf(ema50));
+        emaModel.setEma100(BigDecimal.valueOf(ema100));
+        emaModel.setEma200(BigDecimal.valueOf(ema200));
+        cryptoCurrenciesModel.setEma(emaModel);
+
+    }
+
+
+
+//    public List<CryptoCurrenciesModel> patchEma() {
+//        var coins = cryptoCurrenciesService.getCoins();
+//        var executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+//
+//        List<CompletableFuture<Void>> futures = coins.stream()
+//                .flatMap(coin -> Stream.of(
+//                        CompletableFuture.runAsync(() -> findEMA(coin, 50), executor),
+//                        CompletableFuture.runAsync(() -> findEMA(coin, 100), executor),
+//                        CompletableFuture.runAsync(() -> findEMA(coin, 200), executor)
+//                ))
+//                .toList();
+//
+//        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+//                .exceptionally(ex -> null)
+//                .thenAccept(ac -> cryptoCurrenciesService.saveAllCoins(coins))
+//                .join();
+//
+//
+//        return coins.stream().filter(value-> !validator.validate(value.getEma(), EmaValidator.class).isEmpty() ).toList();
+//    }
 
 
     private void findEMA(CryptoCurrenciesModel cryptoCurrenciesModel,Integer days) {

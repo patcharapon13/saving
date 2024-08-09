@@ -19,7 +19,8 @@ import java.math.BigDecimal;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class EmaModel {
 
-    private String id;
+    private String productId;
+
     @Null(groups = EmaValidator.class)
     private BigDecimal ema50;
     @Null(groups = EmaValidator.class)

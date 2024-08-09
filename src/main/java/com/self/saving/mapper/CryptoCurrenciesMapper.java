@@ -1,12 +1,11 @@
 package com.self.saving.mapper;
 
 import com.self.saving.entity.CryptoCurrenciesInfoEntity;
+import com.self.saving.entity.EmaEntity;
 import com.self.saving.model.CryptoCurrenciesModel;
 import com.self.saving.model.CryptoProductModel;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.NullValuePropertyMappingStrategy;
-import org.mapstruct.ReportingPolicy;
+import com.self.saving.model.EmaModel;
+import org.mapstruct.*;
 
 import java.util.List;
 import java.util.Set;
@@ -17,12 +16,17 @@ import java.util.Set;
 public interface CryptoCurrenciesMapper {
 
     @Mapping(target = "productId", source = "id")
-    @Mapping(target = "ema.productId", source = "id")
     CryptoCurrenciesInfoEntity toCryptoCurrenciesInfoEntity(CryptoCurrenciesModel model);
-
 
     List<CryptoCurrenciesInfoEntity> toCryptoCurrenciesInfoEntities(List<CryptoCurrenciesModel> models);
 
+
+    @Mapping(target = "productId", source = "id")
+    @Mapping(target = "price", source = "priceStatus.price")
+    @Mapping(target = "ema.productId", source = "id")
+    CryptoCurrenciesInfoEntity toCryptoCurrenciesInfoEntity(CryptoProductModel models);
+
+    Set<CryptoCurrenciesInfoEntity> toCryptoCurrenciesInfoEntities(Set<CryptoProductModel> models);
 
     List<CryptoCurrenciesModel> toCryptoCurrenciesModels(List<CryptoCurrenciesInfoEntity> entities);
 

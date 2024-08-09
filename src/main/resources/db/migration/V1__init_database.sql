@@ -2,7 +2,7 @@ create schema if not exists saving;
 
 CREATE TABLE ema
 (
-    product_id   varchar(10) primary key,
+    product_id   varchar(25) primary key,
     ema50        decimal(15, 7),
     ema100       decimal(15, 7),
     ema200       decimal(15, 7),
@@ -13,7 +13,7 @@ CREATE TABLE ema
 
 CREATE TABLE crypto_currencies_info
 (
-    product_id   varchar(10) primary key,
+    product_id   varchar(25) primary key,
     price        decimal(15, 7),
     created_date timestamp without time zone default (now()),
     updated_date timestamp without time zone,
