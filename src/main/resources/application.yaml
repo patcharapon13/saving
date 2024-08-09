@@ -1,0 +1,52 @@
+server:
+  port: 8086
+  error:
+    include-stacktrace: always
+
+spring:
+  profiles:
+    active: local
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/progessDB
+    username: dbusr
+    password: dbpass#123
+    hikari:
+      schema: saving
+      minimum-idle: 1
+      maximum-pool-size: 3
+
+  flyway:
+    enabled: true
+    schemas: saving
+    locations: classpath:db/migration
+
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        enable_lazy_load_no_trans: true
+    hibernate:
+      ddl-auto: none
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+    generate-ddl: false
+  cache:
+    type: redis
+    redis:
+      time-to-live: 60000
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 1
+      password: password
+      timeout: 600000
+
+application:
+  sheets-post-endpoint: https://script.google.com/macros/s/AKfycbxFATGfPL2Zj2NkQrWScqMh1aY2C5IO4q29m1b4U4QW6Uvdn0C2WK8ixOE0FYKopVb2/exec
+  coinbase-endpoint:
+    main: https://api.exchange.coinbase.com/products
+    histories: /candles
+    status: /stats
